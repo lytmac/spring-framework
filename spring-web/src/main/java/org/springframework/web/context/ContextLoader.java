@@ -160,15 +160,17 @@ public class ContextLoader {
 	 * Name of the class path resource (relative to the ContextLoader class)
 	 * that defines ContextLoader's default strategy names.
 	 */
-	private static final String DEFAULT_STRATEGIES_PATH = "ContextLoader.properties";
+	private static final String DEFAULT_STRATEGIES_PATH = "";
 
 
 	private static final Properties defaultStrategies;
 
 	static {
-		// Load default strategy implementations from properties file.
-		// This is currently strictly internal and not meant to be customized
-		// by application developers.
+		/**
+		 * 加载ContextLoader的class文件后，优先要解析出使用哪个BeanFactory来完成Spring容器的初始化工作
+		 * ContextLoader.properties文件中定义的BeanFactory是XmlWebApplicationContext
+		 * 在Spring中可以通过设定参数contextClass来覆盖这个默认配置,从而使用配置的BeanFactory来完成Spring容器的初始化工作
+		 */
 		try {
 			ClassPathResource resource = new ClassPathResource(DEFAULT_STRATEGIES_PATH, ContextLoader.class);
 			defaultStrategies = PropertiesLoaderUtils.loadProperties(resource);
@@ -373,6 +375,9 @@ public class ContextLoader {
 	 */
 	protected WebApplicationContext createWebApplicationContext(ServletContext sc) {
 		Class<?> contextClass = determineContextClass(sc);
+        /**
+         * 配置的BeanFactory必须得实现ConfigurableWebApplicationContext接口
+         */
 		if (!ConfigurableWebApplicationContext.class.isAssignableFrom(contextClass)) {
 			throw new ApplicationContextException("Custom context class [" + contextClass.getName() +
 					"] is not of type [" + ConfigurableWebApplicationContext.class.getName() + "]");
@@ -391,15 +396,21 @@ public class ContextLoader {
 	protected Class<?> determineContextClass(ServletContext servletContext) {
 		String contextClassName = servletContext.getInitParameter(CONTEXT_CLASS_PARAM);
 		if (contextClassName != null) {
+			/**
+			  如果servletContext中配置了contextClass参数，则表示要使用该指定的BeanFactory来完成Spring容器的初始化工作。
+			 */
 			try {
 				return ClassUtils.forName(contextClassName, ClassUtils.getDefaultClassLoader());
-			}
-			catch (ClassNotFoundException ex) {
+			} catch (ClassNotFoundException ex) {
 				throw new ApplicationContextException(
 						"Failed to load custom context class [" + contextClassName + "]", ex);
 			}
-		}
-		else {
+		} else {
+			/**
+			 * 如果servletContext中没有配置contextClass参数，则采用Spring默认指定的BeanFactory来完成Spring容器的初始化工作。
+             * 默认的BeanFactory是在ContextLoader.properties文件中配置的，在ContextLoader类加载的时候会加载该文件。
+			 * 既然是默认值，那么为什么不直接用默认变量来赋初值？要整的这么麻烦？
+			 */
 			contextClassName = defaultStrategies.getProperty(WebApplicationContext.class.getName());
 			try {
 				return ClassUtils.forName(contextClassName, ContextLoader.class.getClassLoader());
