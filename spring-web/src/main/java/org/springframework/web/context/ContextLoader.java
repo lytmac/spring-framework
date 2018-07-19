@@ -422,6 +422,11 @@ public class ContextLoader {
 		}
 	}
 
+	/**
+	 * 配置和刷新上下文
+	 * @param wac webApplicationContext: Spring root context
+	 * @param sc servletContext: Servlet context
+	 */
 	protected void configureAndRefreshWebApplicationContext(ConfigurableWebApplicationContext wac, ServletContext sc) {
 		if (ObjectUtils.identityToString(wac).equals(wac.getId())) {
 			// The application context id is still set to its original default value
@@ -429,15 +434,20 @@ public class ContextLoader {
 			String idParam = sc.getInitParameter(CONTEXT_ID_PARAM);
 			if (idParam != null) {
 				wac.setId(idParam);
-			}
-			else {
+			} else {
 				// Generate default id...
 				wac.setId(ConfigurableWebApplicationContext.APPLICATION_CONTEXT_ID_PREFIX +
 						ObjectUtils.getDisplayString(sc.getContextPath()));
 			}
 		}
 
+		/**
+		 * Spring root context配置servletContext
+		 */
 		wac.setServletContext(sc);
+		/**
+		 * Spring root context配置configLocation: context-param -> contextConfigLocation
+		 */
 		String configLocationParam = sc.getInitParameter(CONFIG_LOCATION_PARAM);
 		if (configLocationParam != null) {
 			wac.setConfigLocation(configLocationParam);

@@ -1579,17 +1579,24 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		/**
 		 * !(beanInstance instanceof FactoryBean): 普通的bean对象
 		 * BeanFactoryUtils.isFactoryDereference(name): FactoryBean对象
+		 * 如果用户需要的是FactoryBean所实例化的bean对象，则beanName中不应该有"&"
+		 * 如果用户需要的是FactoryBean本身的对象，则beanName中应该有"&"
 		 */
 		if (!(beanInstance instanceof FactoryBean) || BeanFactoryUtils.isFactoryDereference(name)) {
 			return beanInstance;
 		}
 
+		/**
+		 * 从FactoryBean对象中获取bean对象
+		 */
 		Object object = null;
 		if (mbd == null) {
 			object = getCachedObjectForFactoryBean(beanName);
 		}
 		if (object == null) {
-			// Return bean instance from factory.
+			/**
+			 * 到这里可以明确是FactoryBean，要获取bean对象。
+			 */
 			FactoryBean<?> factory = (FactoryBean<?>) beanInstance;
 			// Caches object obtained from FactoryBean if it is a singleton.
 			if (mbd == null && containsBeanDefinition(beanName)) {
